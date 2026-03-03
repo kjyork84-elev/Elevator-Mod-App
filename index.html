@@ -1,389 +1,553 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Cab Modernization" />
-  <meta name="theme-color" content="#0f0e0c" />
-  <title>Cab Interior Modernization</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body, #root { height: 100%; }
-    body { background: #0f0e0c; color: #e8e0d0; font-family: 'Source Serif 4', Georgia, serif; overflow: hidden; }
-
-    /* ---- HEADER ---- */
-    .header {
-      background: linear-gradient(180deg, #1a1814 0%, #0f0e0c 100%);
-      border-bottom: 1px solid #3a3020;
-      padding: 16px 20px 14px;
-      padding-top: calc(16px + env(safe-area-inset-top));
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    }
-    .title { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 900; letter-spacing: -0.01em; color: #c8a96e; }
-    .subtitle { font-style: italic; font-size: 0.78rem; color: #7a6a50; margin-top: 2px; }
-    .progress-bar-wrap { height: 3px; background: #2a2418; margin-top: 10px; border-radius: 2px; }
-    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c8a96e, #e8c88e); border-radius: 2px; transition: width 0.5s ease; }
-    .progress-label { font-size: 0.7rem; color: #7a6a50; margin-top: 5px; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    /* ---- LAYOUT ---- */
-    .app-body {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      padding-top: 105px; /* header height */
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    /* ---- PHASE NAV (horizontal scroll) ---- */
-    .phase-nav {
-      display: flex;
-      overflow-x: auto;
-      gap: 0;
-      border-bottom: 1px solid #2a2418;
-      background: #0f0e0c;
-      flex-shrink: 0;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .phase-nav::-webkit-scrollbar { display: none; }
-    .phase-tab {
-      flex-shrink: 0;
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: #5a5040;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      transition: all 0.15s;
-      min-width: 72px;
-    }
-    .phase-tab.active { border-bottom-color: #c8a96e; color: #c8a96e; }
-    .phase-tab .tab-icon { font-size: 1.2rem; }
-    .phase-tab .tab-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
-    .phase-tab .tab-dot { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; }
-    .phase-tab.complete .tab-dot { background: currentColor; }
-
-    /* ---- TASK CONTENT ---- */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 20px 16px 32px;
-    }
-    .phase-header { margin-bottom: 20px; }
-    .phase-tag { font-size: 0.68rem; color: #c8a96e; text-transform: uppercase; letter-spacing: 0.12em; }
-    .phase-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #e8e0d0; margin-top: 3px; }
-    .phase-progress { font-size: 0.8rem; color: #7a6a50; margin-top: 4px; font-style: italic; }
-
-    .task-list { display: flex; flex-direction: column; gap: 0; }
-    .task-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 14px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
-      border: 1px solid transparent;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    .task-item:active { background: #1a1814; }
-    .task-item.done { opacity: 0.5; }
-
-    .task-check {
-      width: 24px; height: 24px; min-width: 24px;
-      border-radius: 6px;
-      border: 1.5px solid #3a3020;
-      display: flex; align-items: center; justify-content: center;
-      margin-top: 1px;
-      transition: all 0.2s;
-      background: transparent;
-    }
-    .task-check.checked { background: #c8a96e; border-color: #c8a96e; }
-    .task-check svg { width: 14px; height: 14px; stroke: #0f0e0c; stroke-width: 2.5; fill: none; }
-
-    .task-text { font-size: 0.93rem; color: #c8b898; line-height: 1.5; flex: 1; }
-    .task-text.done { text-decoration: line-through; color: #5a5040; }
-    .task-hint { font-size: 0.75rem; color: #6a5a40; font-style: italic; margin-top: 3px; }
-
-    .note-btn {
-      background: none; border: none; color: #5a5040;
-      cursor: pointer; font-size: 0.72rem; padding: 4px 0;
-      margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em;
-      display: block;
-    }
-    .note-input {
-      width: 100%; margin-top: 8px;
-      background: #1a1814; border: 1px solid #3a3020;
-      border-radius: 6px; padding: 10px 12px;
-      color: #c8b898; font-family: 'Source Serif 4', serif;
-      font-size: 0.88rem; resize: none; min-height: 70px;
-      outline: none; -webkit-appearance: none;
-    }
-    .note-input:focus { border-color: #c8a96e; }
-    .divider { height: 1px; background: #1e1b14; margin: 0 12px; }
-
-    /* ---- NAV ARROWS ---- */
-    .phase-nav-btns {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-top: 1px solid #1e1b14;
-      flex-shrink: 0;
-    }
-    .nav-btn {
-      background: #1a1814; border: 1px solid #3a3020;
-      color: #c8a96e; font-size: 0.78rem;
-      padding: 10px 20px; border-radius: 6px;
-      cursor: pointer; letter-spacing: 0.06em;
-      text-transform: uppercase; font-family: 'Source Serif 4', serif;
-    }
-    .nav-btn:disabled { opacity: 0.2; cursor: default; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0f0e0c"/>
+<title>Elevator Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,400;1,300&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body,#root{height:100%;overflow:hidden}
+body{background:#0f0e0c;color:#e8e0d0;font-family:'Source Serif 4',Georgia,serif}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#3a3020;border-radius:2px}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;background:#0f0e0c;overflow:hidden}
+.hdr{background:linear-gradient(180deg,#1a1814,#0f0e0c);border-bottom:1px solid #2a2418;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));flex-shrink:0}
+.hdr-row{display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:900;color:#c8a96e}
+.hdr-sub{font-style:italic;font-size:0.72rem;color:#7a6a50;margin-top:2px}
+.pbar-wrap{height:2px;background:#2a2418;margin-top:8px;border-radius:2px}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#c8a96e,#e8c88e);border-radius:2px;transition:width 0.5s}
+.pbar-lbl{font-size:0.62rem;color:#7a6a50;margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.proj-list{padding:14px;display:flex;flex-direction:column;gap:10px}
+.btn-primary{width:100%;padding:13px;background:#c8a96e;color:#0f0e0c;border:none;border-radius:8px;font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;cursor:pointer}
+.proj-card{background:#1a1814;border:1px solid #3a3020;border-radius:10px;padding:14px;cursor:pointer}
+.proj-card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.proj-name{font-family:'Playfair Display',serif;font-size:1rem;color:#e8e0d0}
+.proj-meta{font-size:0.68rem;color:#7a6a50;margin-top:2px;font-style:italic}
+.proj-pct{font-family:'Playfair Display',serif;font-size:1.3rem;color:#c8a96e}
+.proj-pbar{height:2px;background:#2a2418;margin-top:8px;border-radius:2px}
+.proj-pbar-fill{height:100%;background:linear-gradient(90deg,#c8a96e,#e8c88e);border-radius:2px;transition:width .4s}
+.proj-btns{display:flex;gap:8px;margin-top:10px}
+.btn-sm{font-size:0.68rem;padding:6px 12px;border-radius:5px;border:1px solid #3a3020;background:#221f18;color:#c8b898;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.btn-danger{color:#e07070;border-color:#5a2020}
+.btn-gold{color:#c8a96e;border-color:#c8a96e}
+.empty-state{text-align:center;padding:50px 20px;color:#7a6a50;font-style:italic}
+.form-wrap{padding:16px}
+.form-card{background:#1a1814;border:1px solid #3a3020;border-radius:10px;padding:18px}
+.form-row{margin-bottom:12px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.form-lbl{display:block;font-size:0.65rem;color:#7a6a50;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.form-inp{width:100%;background:#221f18;border:1px solid #3a3020;border-radius:6px;padding:10px 11px;color:#e8e0d0;font-family:'Source Serif 4',serif;font-size:0.9rem;outline:none;-webkit-appearance:none;appearance:none}
+.form-inp:focus{border-color:#c8a96e}
+.btn-secondary{width:100%;padding:11px;background:transparent;color:#7a6a50;border:1px solid #3a3020;border-radius:7px;font-size:0.85rem;cursor:pointer;margin-top:8px}
+.back-btn{background:none;border:none;color:#c8a96e;font-size:0.75rem;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;padding:0}
+.mod-tabs{display:flex;overflow-x:auto;border-bottom:1px solid #2a2418;background:#0f0e0c;flex-shrink:0;scrollbar-width:none}
+.mod-tabs::-webkit-scrollbar{display:none}
+.mod-tab{flex-shrink:0;padding:8px 12px;background:none;border:none;border-bottom:2px solid transparent;color:#5a5040;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:65px;transition:all .15s}
+.mod-tab.active{border-bottom-color:#c8a96e;color:#c8a96e}
+.t-icon{font-size:1rem}
+.t-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.t-dot{width:4px;height:4px;border-radius:50%;border:1px solid currentColor}
+.mod-tab.complete .t-dot{background:currentColor}
+.task-section{padding:14px 12px 100px}
+.mod-hdr{margin-bottom:16px}
+.mod-tag{font-size:0.62rem;color:#c8a96e;text-transform:uppercase;letter-spacing:.1em}
+.mod-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:#e8e0d0;margin-top:2px}
+.mod-prog{font-size:0.75rem;color:#7a6a50;margin-top:2px;font-style:italic}
+.task-wrap{position:relative;margin-bottom:2px;border-radius:8px;overflow:hidden}
+.task-dismiss-bg{position:absolute;inset:0;background:#5a1a1a;display:flex;align-items:center;justify-content:flex-end;padding-right:18px;border-radius:8px;font-size:0.7rem;color:#e07070;text-transform:uppercase;letter-spacing:.08em}
+.task-item{display:flex;align-items:flex-start;gap:11px;padding:12px 10px;background:#0f0e0c;border-radius:8px;border:1px solid transparent;position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.task-item.done{opacity:.45}
+.task-check{width:22px;height:22px;min-width:22px;border-radius:5px;border:1.5px solid #3a3020;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .2s;background:transparent;flex-shrink:0}
+.task-check.checked{background:#c8a96e;border-color:#c8a96e}
+.chk-svg{width:12px;height:12px;stroke:#0f0e0c;stroke-width:2.5;fill:none}
+.task-body{flex:1;min-width:0}
+.task-text{font-size:0.88rem;color:#c8b898;line-height:1.45}
+.task-text.done{text-decoration:line-through;color:#5a5040}
+.task-acts{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+.task-btn{background:none;border:none;color:#5a5040;cursor:pointer;font-size:0.65rem;padding:2px 0;text-transform:uppercase;letter-spacing:.05em}
+.note-inp{width:100%;margin-top:6px;background:#1a1814;border:1px solid #3a3020;border-radius:5px;padding:7px 9px;color:#c8b898;font-family:'Source Serif 4',serif;font-size:0.82rem;resize:none;min-height:55px;outline:none;-webkit-appearance:none}
+.note-inp:focus{border-color:#c8a96e}
+.photo-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.photo-thumb{width:50px;height:50px;border-radius:5px;object-fit:cover;border:1px solid #3a3020}
+.photo-del-wrap{position:relative}
+.photo-del{position:absolute;top:-4px;right:-4px;width:15px;height:15px;border-radius:50%;background:#c0392b;border:none;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.divider{height:1px;background:#1a1814;margin:0 4px}
+.dismissed-section{margin-top:18px}
+.dismissed-toggle{width:100%;background:none;border:1px dashed #3a3020;border-radius:7px;padding:9px;color:#5a5040;font-size:0.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:.07em}
+.dismissed-item{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:#1a1814;border-radius:7px;margin-top:5px;border:1px solid #2a2418}
+.dismissed-text{font-size:0.82rem;color:#5a5040;font-style:italic}
+.restore-btn{font-size:0.65rem;color:#c8a96e;background:none;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.bot-nav{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-top:1px solid #2a2418;background:#0f0e0c;flex-shrink:0;padding-bottom:calc(9px + env(safe-area-inset-bottom))}
+.nav-btn{background:#1a1814;border:1px solid #3a3020;color:#c8a96e;font-size:0.7rem;padding:8px 14px;border-radius:6px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.nav-btn:disabled{opacity:.2;cursor:default}
+.nav-ctr{font-size:0.65rem;color:#5a5040;letter-spacing:.08em}
+.dl-btn{background:#1a1814;border:1px solid #c8a96e;color:#c8a96e;font-size:0.7rem;padding:7px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#1a1814;border:1px solid #3a3020;border-radius:12px;padding:22px;width:100%;max-width:320px}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.05rem;color:#c8a96e;margin-bottom:8px}
+.modal-text{font-size:0.82rem;color:#7a6a50;margin-bottom:16px;line-height:1.5}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:10px;border-radius:7px;font-size:0.82rem;cursor:pointer}
+.modal-cancel{background:transparent;border:1px solid #3a3020;color:#7a6a50}
+.modal-confirm{background:#8b1a1a;border:none;color:#fff}
+</style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
+<script>
+(function() {
+'use strict';
+var h = React.createElement;
+var useState = React.useState;
+var useRef = React.useRef;
+var useEffect = React.useEffect;
 
-  <script type="text/babel">
-    const { useState, useRef, useEffect } = React;
+var MODULES = [
+  {id:'survey', label:'Site Survey', icon:'Survey', perFloor:[], tasks:['Hoistway wire','Pit channel','Travel cable','Telephone','Scope','Photos','Piston layout','Seismic plates','Contacts','Scanning','Cab drawings','Fixtures','Jack build sheet','Site Survey sheet','Controller prints']},
+  {id:'machineroom', label:'Machine Room', icon:'Machine', perFloor:[], tasks:['Smoke detectors covered','Lighting','Main disconnect','110V disconnect','GFCI plug','Old controller removed','Hydro tank replacement','Hydro pump wired','Hoistway wire run','Piping to controller from hoistway','Oil line run','Paint floor','Isolation coupler','Muffler','Controller prints','Controller manual','Old maintenance logs']},
+  {id:'hoistway', label:'Hoistway', icon:'Hoistway', perFloor:['Door locks installed','Spirators','Relating cables','Brackets pinned','Hall door rollers','Door pickups','Lunar key access','Door rollers','Vein plates','Floor zone switches','Floor label stencils'], tasks:['Smoke detectors covered','Measurements for wire','Door locks installed','Spirators','Relating cables','Brackets pinned','Travelers hung','Hoistway wire run','Upper limit','Lower limit','Hall door rollers','Anti-snag','Access switch','Door pickups','Lunar key access','Door rollers','Toe guard','Remove old hoistway wire','Remove old travelers','Vein plates','Floor zone switches','Floor label stencils']},
+  {id:'carexterior', label:'Car Exterior', icon:'Car Ext', perFloor:[], tasks:['Old equipment dismantled','Guard rails','Kick plates','Door operator','Inspection station','Fan','Light box','Gate switch','Car door restrictor','Guide shoes','Seismic plates','Landing system','Cam','Troughing','Flex to COP','Leveling system','Door clutch','Light curtain','Light curtain controller','Hatch plug','Toe guard','Data tags']},
+  {id:'carinterior', label:'Car Interior', icon:'Car Int', perFloor:[], tasks:['Cab door removed','Measurements','Car door rollers','COP cut','Door jamb arrows','Hand rails','Toe guard','Remove COP','Dismantle cab','Remove floors','Reclad interior','Install wall panels','Install ceiling','Pad pins','Remove stainless protection','Cab door reinstalled','Install COP','TSBC plate']},
+  {id:'pit', label:'Pit', icon:'Pit', perFloor:[], tasks:['Lighting','Stop switch','Buffers','Jack removed','GFCI switch','Flood switch','PVC sheath installed','Jack installed','Pit channel','Ladder']},
+  {id:'hallways', label:'Hallways', icon:'Hallways', perFloor:['Hall call buttons','Pickup indicators','Floor protection','Braille','Lighting sufficient'], tasks:['Hall call buttons','Pickup indicators','Door jambs reclad','Fire panel installed','Floor protection','Braille','Lighting sufficient']},
+  {id:'building', label:'Building', icon:'Building', perFloor:[], tasks:['Machine room door','Phone line','Machine room empty','Hallway lighting','Fire extinguisher','Ventilation requirements']}
+];
 
-    const steps = [
-      {
-        id: "assessment", phase: "Phase 1", title: "Initial Assessment", icon: "📋",
-        tasks: [
-          { id: "t1", text: "Measure cab interior dimensions (H × W × D)", note: "Document in inches" },
-          { id: "t2", text: "Photograph existing condition of all surfaces" },
-          { id: "t3", text: "Identify existing cab material (wood, steel, laminate)" },
-          { id: "t4", text: "Check door type and operator compatibility" },
-          { id: "t5", text: "Note ADA compliance gaps (handrails, signage, floor indicators)" },
-          { id: "t6", text: "Assess lighting fixture type and ceiling condition" },
-        ],
-      },
-      {
-        id: "flooring", phase: "Phase 2", title: "Flooring", icon: "🪨",
-        tasks: [
-          { id: "t7", text: "Remove existing flooring and adhesive" },
-          { id: "t8", text: "Inspect and repair subfloor if damaged" },
-          { id: "t9", text: "Install new flooring material (tile, vinyl, stone, carpet)" },
-          { id: "t10", text: "Apply transition strips at cab threshold" },
-          { id: "t11", text: "Verify floor is level and seams are flush" },
-        ],
-      },
-      {
-        id: "walls", phase: "Phase 3", title: "Wall Panels", icon: "🧱",
-        tasks: [
-          { id: "t12", text: "Remove existing wall panels carefully (preserve wiring)" },
-          { id: "t13", text: "Inspect and treat for corrosion on cab structure" },
-          { id: "t14", text: "Install new wall panels (stainless, laminate, or decorative)" },
-          { id: "t15", text: "Secure all panels with appropriate fasteners" },
-          { id: "t16", text: "Install base/chair rail moldings if applicable" },
-          { id: "t17", text: "Ensure panel joints are tight and aligned" },
-        ],
-      },
-      {
-        id: "ceiling", phase: "Phase 4", title: "Ceiling & Lighting", icon: "💡",
-        tasks: [
-          { id: "t18", text: "Remove old ceiling panels and light fixtures" },
-          { id: "t19", text: "Upgrade wiring to support LED fixtures" },
-          { id: "t20", text: "Install new ceiling panels (flush, drop, or canopy style)" },
-          { id: "t21", text: "Mount LED lighting — ensure 50+ foot-candles at floor level" },
-          { id: "t22", text: "Install emergency lighting per code (ASME A17.1)" },
-          { id: "t23", text: "Add ventilation grille if required" },
-        ],
-      },
-      {
-        id: "cop", phase: "Phase 5", title: "COP Panel", icon: "🎛️",
-        tasks: [
-          { id: "t24", text: "Remove and catalog existing COP wiring" },
-          { id: "t25", text: "Install new COP faceplate and housing" },
-          { id: "t26", text: "Wire buttons for all floors + door open/close/alarm" },
-          { id: "t27", text: "Install Braille labels on all buttons (ADA required)" },
-          { id: "t28", text: "Test each button for proper floor registration" },
-          { id: "t29", text: "Mount emergency phone and test connection" },
-        ],
-      },
-      {
-        id: "handrails", phase: "Phase 6", title: "Handrails & ADA", icon: "♿",
-        tasks: [
-          { id: "t30", text: "Remove old handrails (if present)" },
-          { id: "t31", text: 'Mark and drill mounting holes at 34"–38" height' },
-          { id: "t32", text: "Install stainless or brass handrail on rear wall" },
-          { id: "t33", text: "Install side handrails if cab width allows" },
-          { id: "t34", text: 'Verify handrail clearance from wall (1.5" min)' },
-          { id: "t35", text: "Install floor position indicator / digital display" },
-        ],
-      },
-      {
-        id: "doors", phase: "Phase 7", title: "Doors & Sill", icon: "🚪",
-        tasks: [
-          { id: "t36", text: "Remove existing cab door panels" },
-          { id: "t37", text: "Install new matching door panels (align with walls)" },
-          { id: "t38", text: "Clean or replace cab sill and gibs" },
-          { id: "t39", text: "Check door reopening device (safety edge / light curtain)" },
-          { id: "t40", text: "Adjust door speed and dwell time" },
-        ],
-      },
-      {
-        id: "inspection", phase: "Phase 8", title: "Sign-Off", icon: "✅",
-        tasks: [
-          { id: "t41", text: "Conduct full visual punch-list walkthrough" },
-          { id: "t42", text: "Test all buttons, lighting, and phone" },
-          { id: "t43", text: "Verify ADA compliance (dimensions, signage, braille)" },
-          { id: "t44", text: "Clean cab thoroughly before inspection" },
-          { id: "t45", text: "Submit documentation to local AHJ for approval" },
-          { id: "t46", text: "Obtain certificate of operation / inspection sticker" },
-        ],
-      },
-    ];
-
-    function App() {
-      const [checked, setChecked] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('elev-checked') || '{}'); } catch { return {}; }
-      });
-      const [activeIdx, setActiveIdx] = useState(0);
-      const [notes, setNotes] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('elev-notes') || '{}'); } catch { return {}; }
-      });
-      const [showNoteFor, setShowNoteFor] = useState(null);
-      const navRef = useRef(null);
-
-      // Persist to localStorage
-      useEffect(() => {
-        try { localStorage.setItem('elev-checked', JSON.stringify(checked)); } catch {}
-      }, [checked]);
-      useEffect(() => {
-        try { localStorage.setItem('elev-notes', JSON.stringify(notes)); } catch {}
-      }, [notes]);
-
-      const totalTasks = steps.reduce((a, s) => a + s.tasks.length, 0);
-      const completedTasks = Object.values(checked).filter(Boolean).length;
-      const pct = Math.round((completedTasks / totalTasks) * 100);
-
-      const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
-      const phaseComplete = (s) => s.tasks.every(t => checked[t.id]);
-      const phaseProgress = (s) => s.tasks.filter(t => checked[t.id]).length;
-
-      const activeStep = steps[activeIdx];
-
-      const goTo = (idx) => {
-        setActiveIdx(idx);
-        setShowNoteFor(null);
-        // Scroll tab into view
-        setTimeout(() => {
-          const tabs = navRef.current?.querySelectorAll('.phase-tab');
-          tabs?.[idx]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }, 50);
-      };
-
-      return (
-        <div>
-          {/* FIXED HEADER */}
-          <div className="header">
-            <div className="title">Cab Interior Modernization</div>
-            <div className="subtitle">Step-by-step renovation checklist</div>
-            <div className="progress-bar-wrap">
-              <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="progress-label">{completedTasks} of {totalTasks} tasks — {pct}% complete</div>
-          </div>
-
-          <div className="app-body">
-            {/* PHASE NAV TABS */}
-            <div className="phase-nav" ref={navRef}>
-              {steps.map((s, i) => (
-                <button
-                  key={s.id}
-                  className={`phase-tab ${activeIdx === i ? 'active' : ''} ${phaseComplete(s) ? 'complete' : ''}`}
-                  onClick={() => goTo(i)}
-                >
-                  <span className="tab-icon">{s.icon}</span>
-                  <span className="tab-label">{s.title}</span>
-                  <span className="tab-dot" />
-                </button>
-              ))}
-            </div>
-
-            {/* TASK CONTENT */}
-            <div className="content">
-              <div className="phase-header">
-                <div className="phase-tag">{activeStep.phase} · {activeStep.icon} {activeStep.title}</div>
-                <div className="phase-title">{activeStep.title}</div>
-                <div className="phase-progress">
-                  {phaseProgress(activeStep)} of {activeStep.tasks.length} tasks completed
-                  {phaseComplete(activeStep) ? ' — Phase complete ✓' : ''}
-                </div>
-              </div>
-
-              <div className="task-list">
-                {activeStep.tasks.map((task, i) => (
-                  <div key={task.id}>
-                    <div
-                      className={`task-item ${checked[task.id] ? 'done' : ''}`}
-                      onClick={() => toggle(task.id)}
-                    >
-                      <div className={`task-check ${checked[task.id] ? 'checked' : ''}`}>
-                        {checked[task.id] && (
-                          <svg viewBox="0 0 14 14">
-                            <polyline points="2,7 6,11 12,3" />
-                          </svg>
-                        )}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div className={`task-text ${checked[task.id] ? 'done' : ''}`}>{task.text}</div>
-                        {task.note && <div className="task-hint">{task.note}</div>}
-                        <button
-                          className="note-btn"
-                          onClick={(e) => { e.stopPropagation(); setShowNoteFor(showNoteFor === task.id ? null : task.id); }}
-                        >
-                          {notes[task.id] ? '📝 Edit note' : '+ add note'}
-                        </button>
-                        {showNoteFor === task.id && (
-                          <textarea
-                            className="note-input"
-                            placeholder="Add a field note..."
-                            value={notes[task.id] || ''}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => setNotes(prev => ({ ...prev, [task.id]: e.target.value }))}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {i < activeStep.tasks.length - 1 && <div className="divider" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* PREV / NEXT NAV */}
-            <div className="phase-nav-btns">
-              <button className="nav-btn" onClick={() => goTo(activeIdx - 1)} disabled={activeIdx === 0}>
-                ← Prev
-              </button>
-              <span style={{ fontSize: '0.72rem', color: '#5a5040', alignSelf: 'center', letterSpacing: '0.08em' }}>
-                {activeIdx + 1} / {steps.length}
-              </span>
-              <button className="nav-btn" onClick={() => goTo(activeIdx + 1)} disabled={activeIdx === steps.length - 1}>
-                Next →
-              </button>
-            </div>
-          </div>
-        </div>
-      );
+function buildTasks(mod, numFloors) {
+  var n = Math.max(1, parseInt(numFloors) || 1);
+  var out = [];
+  mod.tasks.forEach(function(name) {
+    if (mod.perFloor.indexOf(name) >= 0) {
+      for (var f = 1; f <= n; f++) {
+        out.push({id: mod.id + '__' + name + '__f' + f, name: name + ' -- Floor ' + f});
+      }
+    } else {
+      out.push({id: mod.id + '__' + name, name: name});
     }
+  });
+  return out;
+}
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+function overallPct(proj) {
+  var ts = proj.taskState || {};
+  var total = 0, done = 0;
+  MODULES.forEach(function(m) {
+    buildTasks(m, proj.numFloors).forEach(function(t) {
+      if (!ts[t.id] || !ts[t.id].dismissed) {
+        total++;
+        if (ts[t.id] && ts[t.id].checked) done++;
+      }
+    });
+  });
+  return total ? Math.round(done / total * 100) : 0;
+}
+
+function modPct(mod, proj) {
+  var ts = proj.taskState || {};
+  var tasks = buildTasks(mod, proj.numFloors);
+  var active = tasks.filter(function(t) { return !ts[t.id] || !ts[t.id].dismissed; });
+  if (!active.length) return 100;
+  var done = active.filter(function(t) { return ts[t.id] && ts[t.id].checked; }).length;
+  return Math.round(done / active.length * 100);
+}
+
+function saveAll(p) { try { localStorage.setItem('elevpro_v3', JSON.stringify(p)); } catch(e) {} }
+function loadAll() { try { return JSON.parse(localStorage.getItem('elevpro_v3') || '[]'); } catch(e) { return []; } }
+
+function Task(props) {
+  var task = props.task;
+  var ts = props.ts || {};
+  var swipeX = useState(0);
+  var setSwipeX = swipeX[1];
+  swipeX = swipeX[0];
+  var showNote = useState(false);
+  var setShowNote = showNote[1];
+  showNote = showNote[0];
+  var startX = useRef(null);
+  var fileRef = useRef(null);
+  var camRef = useRef(null);
+
+  function onTS(e) { startX.current = e.touches[0].clientX; }
+  function onTM(e) {
+    if (startX.current === null) return;
+    var dx = e.touches[0].clientX - startX.current;
+    if (dx < 0) setSwipeX(Math.max(dx, -85));
+  }
+  function onTE() {
+    if (swipeX < -60) props.onDismiss();
+    setSwipeX(0);
+    startX.current = null;
+  }
+  function addPhoto(file) {
+    var r = new FileReader();
+    r.onload = function(e) { props.onPhoto(e.target.result); };
+    r.readAsDataURL(file);
+  }
+
+  return h('div', {className:'task-wrap'},
+    h('div', {className:'task-dismiss-bg'}, 'Dismiss'),
+    h('div', {
+      className: 'task-item' + (ts.checked ? ' done' : ''),
+      style: {transform: 'translateX(' + swipeX + 'px)', transition: swipeX === 0 ? 'transform .25s ease' : 'none'},
+      onTouchStart: onTS, onTouchMove: onTM, onTouchEnd: onTE,
+      onClick: props.onToggle
+    },
+      h('div', {className: 'task-check' + (ts.checked ? ' checked' : '')},
+        ts.checked ? h('svg', {className:'chk-svg', viewBox:'0 0 14 14'},
+          h('polyline', {points:'2,7 6,11 12,3'})
+        ) : null
+      ),
+      h('div', {className:'task-body'},
+        h('div', {className: 'task-text' + (ts.checked ? ' done' : '')}, task.name),
+        h('div', {className:'task-acts'},
+          h('button', {className:'task-btn', onClick:function(e){e.stopPropagation();setShowNote(function(v){return !v;})}},
+            ts.note ? 'Note (edit)' : '+ Note'),
+          h('button', {className:'task-btn', onClick:function(e){e.stopPropagation();camRef.current && camRef.current.click();}}, 'Camera'),
+          h('button', {className:'task-btn', onClick:function(e){e.stopPropagation();fileRef.current && fileRef.current.click();}}, 'Gallery')
+        ),
+        showNote ? h('textarea', {
+          className:'note-inp', placeholder:'Field note...',
+          value: ts.note || '',
+          onClick: function(e){e.stopPropagation();},
+          onChange: function(e){props.onNote(e.target.value);}
+        }) : null,
+        (ts.photos || []).length > 0 ? h('div', {className:'photo-row'},
+          (ts.photos || []).map(function(src, i) {
+            return h('div', {key:i, className:'photo-del-wrap'},
+              h('img', {src:src, className:'photo-thumb', alt:''}),
+              h('button', {className:'photo-del', onClick:function(e){e.stopPropagation();props.onDelPhoto(i);}}, 'x')
+            );
+          })
+        ) : null
+      )
+    ),
+    h('input', {ref:camRef, type:'file', accept:'image/*', capture:'environment', style:{display:'none'},
+      onChange:function(e){if(e.target.files[0])addPhoto(e.target.files[0]);e.target.value='';}}),
+    h('input', {ref:fileRef, type:'file', accept:'image/*', style:{display:'none'},
+      onChange:function(e){if(e.target.files[0])addPhoto(e.target.files[0]);e.target.value='';}})
+  );
+}
+
+function ModuleView(props) {
+  var proj = props.proj;
+  var modIdx = props.modIdx;
+  var mod = MODULES[modIdx];
+  var ts = proj.taskState || {};
+  var showDismissed = useState(false);
+  var setShowDismissed = showDismissed[1];
+  showDismissed = showDismissed[0];
+
+  var tasks = buildTasks(mod, proj.numFloors);
+  var active = tasks.filter(function(t) { return !ts[t.id] || !ts[t.id].dismissed; });
+  var dismissed = tasks.filter(function(t) { return ts[t.id] && ts[t.id].dismissed; });
+  var done = active.filter(function(t) { return ts[t.id] && ts[t.id].checked; }).length;
+  var pct = active.length ? Math.round(done / active.length * 100) : 100;
+  var oPct = overallPct(proj);
+
+  function upd(taskId, patch) {
+    var cur = ts[taskId] || {};
+    var newTs = Object.assign({}, ts);
+    newTs[taskId] = Object.assign({}, cur, patch);
+    props.onUpdate({taskState: newTs});
+  }
+
+  function handleDownload() {
+    var jsPDF = window.jspdf.jsPDF;
+    var zip = new JSZip();
+    var doc = new jsPDF({unit:'pt', format:'letter'});
+    var W = doc.internal.pageSize.getWidth();
+    var y = 50;
+    function newPage() { doc.addPage(); y = 50; }
+    function chk(n) { if (y + (n||25) > 730) newPage(); }
+
+    doc.setFillColor(15,14,12); doc.rect(0,0,W,792,'F');
+    doc.setTextColor(200,169,110); doc.setFontSize(22); doc.setFont('helvetica','bold');
+    doc.text('ELEVATOR MODERNIZATION', W/2, 110, {align:'center'});
+    doc.setFontSize(13); doc.setFont('helvetica','normal');
+    doc.text('Project Report', W/2, 135, {align:'center'});
+    var info = [['Building',proj.buildingName],['Job No.',proj.jobNumber],['Address',(proj.street||'')+', '+(proj.city||'')],['Tech',proj.techName],['Start Date',proj.startDate],['Floors',proj.numFloors],['Progress',oPct+'%'],['Generated',new Date().toLocaleDateString()]];
+    info.forEach(function(row, i) {
+      doc.setTextColor(122,106,80); doc.setFontSize(10); doc.text(row[0]+':', 70, 210+i*22);
+      doc.setTextColor(200,184,152); doc.text(String(row[1]||''), 185, 210+i*22);
+    });
+
+    MODULES.forEach(function(m) {
+      doc.addPage(); y = 50;
+      doc.setFillColor(26,24,20); doc.rect(0,0,W,792,'F');
+      doc.setTextColor(200,169,110); doc.setFontSize(14); doc.setFont('helvetica','bold');
+      doc.text(m.label.toUpperCase(), 50, y); y += 26;
+      var mTasks = buildTasks(m, proj.numFloors);
+      var mActive = mTasks.filter(function(t){return !ts[t.id]||!ts[t.id].dismissed;});
+      var mDone = mActive.filter(function(t){return ts[t.id]&&ts[t.id].checked;}).length;
+      doc.setFontSize(8); doc.setTextColor(122,106,80); doc.setFont('helvetica','normal');
+      doc.text(mDone+'/'+mActive.length+' tasks complete', 50, y); y += 16;
+      mTasks.forEach(function(task) {
+        var s = ts[task.id] || {};
+        if (s.dismissed) return;
+        chk(18);
+        doc.setFontSize(9);
+        doc.setTextColor.apply(doc, s.checked ? [90,160,90] : [200,184,152]);
+        doc.text((s.checked?'[x] ':'[ ] ')+task.name, 50, y); y += 15;
+        if (s.note) {
+          chk(13);
+          doc.setFontSize(8); doc.setTextColor(122,106,80);
+          var lines = doc.splitTextToSize('  Note: '+s.note, W-100);
+          doc.text(lines, 60, y); y += lines.length*11;
+        }
+        if (s.photos && s.photos.length) {
+          s.photos.forEach(function(src, pi) {
+            chk(75);
+            try {
+              doc.addImage(src, 'JPEG', 60, y, 75, 56);
+              var fname = m.id+'/'+task.id.replace(/[^a-z0-9_]/gi,'_')+'_photo'+(pi+1)+'.jpg';
+              zip.file(fname, src.split(',')[1], {base64:true});
+              y += 63;
+            } catch(e) {}
+          });
+        }
+      });
+    });
+
+    zip.file('report.pdf', doc.output('blob'));
+    zip.generateAsync({type:'blob'}).then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (proj.jobNumber||'project').replace(/\s+/g,'_')+'_report.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  return h('div', {className:'screen'},
+    h('div', {className:'hdr'},
+      h('div', {className:'hdr-row'},
+        h('div', null,
+          h('button', {className:'back-btn', onClick:props.onBack}, 'Back to Projects'),
+          h('div', {style:{fontSize:'0.7rem',color:'#7a6a50',marginTop:2,fontStyle:'italic'}},
+            proj.buildingName + ' - ' + proj.jobNumber)
+        ),
+        h('button', {className:'dl-btn', onClick:handleDownload}, 'Download ZIP')
+      ),
+      h('div', {className:'pbar-wrap', style:{marginTop:8}},
+        h('div', {className:'pbar-fill', style:{width:oPct+'%'}})
+      ),
+      h('div', {className:'pbar-lbl'}, 'Overall: ' + oPct + '% complete')
+    ),
+    h('div', {className:'mod-tabs'},
+      MODULES.map(function(m, i) {
+        var mp = modPct(m, proj);
+        return h('button', {
+          key: m.id,
+          className: 'mod-tab' + (modIdx===i?' active':'') + (mp===100?' complete':''),
+          onClick: function(){props.setModIdx(i);}
+        },
+          h('span', {className:'t-lbl'}, m.label),
+          h('span', {className:'t-dot'})
+        );
+      })
+    ),
+    h('div', {className:'scroll'},
+      h('div', {className:'task-section'},
+        h('div', {className:'mod-hdr'},
+          h('div', {className:'mod-tag'}, mod.label),
+          h('div', {className:'mod-title'}, mod.label),
+          h('div', {className:'mod-prog'}, done + ' of ' + active.length + ' tasks complete - ' + pct + '%')
+        ),
+        active.map(function(task, i) {
+          return h('div', {key:task.id},
+            h(Task, {
+              task: task,
+              ts: ts[task.id],
+              onToggle: function(){upd(task.id,{checked:!(ts[task.id]&&ts[task.id].checked)});},
+              onDismiss: function(){upd(task.id,{dismissed:true});},
+              onNote: function(val){upd(task.id,{note:val});},
+              onPhoto: function(src){
+                var existing = (ts[task.id]&&ts[task.id].photos)||[];
+                upd(task.id,{photos:existing.concat([src])});
+              },
+              onDelPhoto: function(idx){
+                var existing = (ts[task.id]&&ts[task.id].photos)||[];
+                upd(task.id,{photos:existing.filter(function(_,j){return j!==idx;})});
+              }
+            }),
+            i < active.length-1 ? h('div', {className:'divider'}) : null
+          );
+        }),
+        dismissed.length > 0 ? h('div', {className:'dismissed-section'},
+          h('button', {className:'dismissed-toggle', onClick:function(){setShowDismissed(function(v){return !v;})}},
+            (showDismissed?'Hide':'Show') + ' ' + dismissed.length + ' dismissed task' + (dismissed.length>1?'s':'') + ' - click to ' + (showDismissed?'hide':'restore')
+          ),
+          showDismissed ? dismissed.map(function(task) {
+            return h('div', {key:task.id, className:'dismissed-item'},
+              h('span', {className:'dismissed-text'}, task.name),
+              h('button', {className:'restore-btn', onClick:function(){upd(task.id,{dismissed:false});}}, 'Restore')
+            );
+          }) : null
+        ) : null
+      )
+    ),
+    h('div', {className:'bot-nav'},
+      h('button', {className:'nav-btn', disabled:modIdx===0, onClick:function(){props.setModIdx(function(i){return i-1;});}}, 'Prev'),
+      h('span', {className:'nav-ctr'}, (modIdx+1) + ' / ' + MODULES.length),
+      h('button', {className:'nav-btn', disabled:modIdx===MODULES.length-1, onClick:function(){props.setModIdx(function(i){return i+1;});}}, 'Next')
+    )
+  );
+}
+
+function NewProject(props) {
+  var fields = useState({buildingName:'',jobNumber:'',street:'',city:'',startDate:new Date().toISOString().split('T')[0],techName:'',numFloors:'2'});
+  var f = fields[0];
+  var setF = fields[1];
+  function set(k,v) { setF(function(p){var n=Object.assign({},p);n[k]=v;return n;}); }
+  var valid = f.buildingName.trim() && f.jobNumber.trim();
+
+  function field(label, key, type, placeholder) {
+    return h('div', null,
+      h('label', {className:'form-lbl'}, label),
+      h('input', {className:'form-inp', type:type||'text', placeholder:placeholder||'', value:f[key],
+        onChange:function(e){set(key,e.target.value);}})
+    );
+  }
+
+  return h('div', {className:'screen'},
+    h('div', {className:'hdr'},
+      h('div', {className:'hdr-row'},
+        h('div', {className:'hdr-title'}, 'New Project'),
+        h('button', {className:'back-btn', onClick:props.onCancel}, 'Cancel')
+      )
+    ),
+    h('div', {className:'scroll'},
+      h('div', {className:'form-wrap'},
+        h('div', {className:'form-card'},
+          h('div', {className:'form-row'}, field('Building Name *', 'buildingName', 'text', 'e.g. Harbour Centre')),
+          h('div', {className:'form-row'}, field('Job Number *', 'jobNumber', 'text', 'e.g. EL-2024-047')),
+          h('div', {className:'form-row'}, field('Street Address', 'street', 'text', '123 Main Street')),
+          h('div', {className:'form-row-2'},
+            field('City', 'city', 'text', 'Victoria'),
+            field('Number of Floors', 'numFloors', 'number', '2')
+          ),
+          h('div', {className:'form-row-2'},
+            field('Start Date', 'startDate', 'date', ''),
+            field('Tech Name', 'techName', 'text', 'Your name')
+          ),
+          h('button', {
+            className:'btn-primary',
+            style:{opacity:valid?1:0.4},
+            disabled:!valid,
+            onClick:function(){
+              props.onSave(Object.assign({}, f, {id:Date.now().toString(), taskState:{}, createdAt:new Date().toISOString()}));
+            }
+          }, 'Create Project'),
+          h('button', {className:'btn-secondary', onClick:props.onCancel}, 'Cancel')
+        )
+      )
+    )
+  );
+}
+
+function Dashboard(props) {
+  var confirmId = useState(null);
+  var setConfirmId = confirmId[1];
+  confirmId = confirmId[0];
+
+  return h('div', {className:'screen'},
+    h('div', {className:'hdr'},
+      h('div', {className:'hdr-title'}, 'Elevator Pro'),
+      h('div', {className:'hdr-sub'}, 'Modernization Checklist')
+    ),
+    h('div', {className:'scroll'},
+      h('div', {className:'proj-list'},
+        h('button', {className:'btn-primary', onClick:props.onCreate}, '+ New Project'),
+        props.projects.length === 0 ? h('div', {className:'empty-state'}, 'No projects yet. Tap New Project to get started.') : null,
+        props.projects.map(function(proj) {
+          var pct = overallPct(proj);
+          return h('div', {key:proj.id, className:'proj-card', onClick:function(){props.onOpen(proj.id);}},
+            h('div', {className:'proj-card-top'},
+              h('div', null,
+                h('div', {className:'proj-name'}, proj.buildingName),
+                h('div', {className:'proj-meta'}, proj.jobNumber + ' - ' + (proj.city||'') + ' - ' + proj.numFloors + ' floors'),
+                h('div', {className:'proj-meta'}, (proj.techName||'') + ' - Started ' + (proj.startDate||''))
+              ),
+              h('div', {className:'proj-pct'}, pct + '%')
+            ),
+            h('div', {className:'proj-pbar'},
+              h('div', {className:'proj-pbar-fill', style:{width:pct+'%'}})
+            ),
+            h('div', {className:'proj-btns', onClick:function(e){e.stopPropagation();}},
+              h('button', {className:'btn-sm btn-gold', onClick:function(){props.onOpen(proj.id);}}, 'Open'),
+              h('button', {className:'btn-sm btn-danger', onClick:function(){setConfirmId(proj.id);}}, 'Delete')
+            )
+          );
+        })
+      )
+    ),
+    confirmId ? h('div', {className:'modal-ov'},
+      h('div', {className:'modal-box'},
+        h('div', {className:'modal-title'}, 'Delete Project?'),
+        h('div', {className:'modal-text'}, 'This will permanently delete the project and all its data. This cannot be undone.'),
+        h('div', {className:'modal-btns'},
+          h('button', {className:'modal-cancel', onClick:function(){setConfirmId(null);}}, 'Cancel'),
+          h('button', {className:'modal-confirm', onClick:function(){props.onDelete(confirmId);setConfirmId(null);}}, 'Delete')
+        )
+      )
+    ) : null
+  );
+}
+
+function App() {
+  var projects = useState(loadAll);
+  var setProjects = projects[1];
+  projects = projects[0];
+  var view = useState('dashboard');
+  var setView = view[1];
+  view = view[0];
+  var activeId = useState(null);
+  var setActiveId = activeId[1];
+  activeId = activeId[0];
+  var modIdx = useState(0);
+  var setModIdx = modIdx[1];
+  modIdx = modIdx[0];
+
+  function save(p) { setProjects(p); saveAll(p); }
+  var activeProj = projects.filter(function(p){return p.id===activeId;})[0];
+
+  if (view === 'new') {
+    return h(NewProject, {
+      onSave: function(proj) { save([proj].concat(projects)); setActiveId(proj.id); setModIdx(0); setView('project'); },
+      onCancel: function() { setView('dashboard'); }
+    });
+  }
+  if (view === 'project' && activeProj) {
+    return h(ModuleView, {
+      proj: activeProj,
+      modIdx: modIdx,
+      setModIdx: setModIdx,
+      onUpdate: function(patch) {
+        save(projects.map(function(p){return p.id===activeId?Object.assign({},p,patch):p;}));
+      },
+      onBack: function() { setView('dashboard'); }
+    });
+  }
+  return h(Dashboard, {
+    projects: projects,
+    onOpen: function(id) { setActiveId(id); setModIdx(0); setView('project'); },
+    onCreate: function() { setView('new'); },
+    onDelete: function(id) { save(projects.filter(function(p){return p.id!==id;})); }
+  });
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App, null));
+})();
+</script>
 </body>
 </html>
