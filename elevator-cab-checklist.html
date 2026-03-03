@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Cab Modernization" />
+  <meta name="theme-color" content="#0f0e0c" />
+  <title>Cab Interior Modernization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body, #root { height: 100%; }
+    body { background: #0f0e0c; color: #e8e0d0; font-family: 'Source Serif 4', Georgia, serif; overflow: hidden; }
+
+    /* ---- HEADER ---- */
+    .header {
+      background: linear-gradient(180deg, #1a1814 0%, #0f0e0c 100%);
+      border-bottom: 1px solid #3a3020;
+      padding: 16px 20px 14px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    }
+    .title { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 900; letter-spacing: -0.01em; color: #c8a96e; }
+    .subtitle { font-style: italic; font-size: 0.78rem; color: #7a6a50; margin-top: 2px; }
+    .progress-bar-wrap { height: 3px; background: #2a2418; margin-top: 10px; border-radius: 2px; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c8a96e, #e8c88e); border-radius: 2px; transition: width 0.5s ease; }
+    .progress-label { font-size: 0.7rem; color: #7a6a50; margin-top: 5px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* ---- LAYOUT ---- */
+    .app-body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding-top: 105px; /* header height */
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ---- PHASE NAV (horizontal scroll) ---- */
+    .phase-nav {
+      display: flex;
+      overflow-x: auto;
+      gap: 0;
+      border-bottom: 1px solid #2a2418;
+      background: #0f0e0c;
+      flex-shrink: 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #5a5040;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+      min-width: 72px;
+    }
+    .phase-tab.active { border-bottom-color: #c8a96e; color: #c8a96e; }
+    .phase-tab .tab-icon { font-size: 1.2rem; }
+    .phase-tab .tab-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+    .phase-tab .tab-dot { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; }
+    .phase-tab.complete .tab-dot { background: currentColor; }
+
+    /* ---- TASK CONTENT ---- */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 16px 32px;
+    }
+    .phase-header { margin-bottom: 20px; }
+    .phase-tag { font-size: 0.68rem; color: #c8a96e; text-transform: uppercase; letter-spacing: 0.12em; }
+    .phase-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #e8e0d0; margin-top: 3px; }
+    .phase-progress { font-size: 0.8rem; color: #7a6a50; margin-top: 4px; font-style: italic; }
+
+    .task-list { display: flex; flex-direction: column; gap: 0; }
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border: 1px solid transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .task-item:active { background: #1a1814; }
+    .task-item.done { opacity: 0.5; }
+
+    .task-check {
+      width: 24px; height: 24px; min-width: 24px;
+      border-radius: 6px;
+      border: 1.5px solid #3a3020;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .task-check.checked { background: #c8a96e; border-color: #c8a96e; }
+    .task-check svg { width: 14px; height: 14px; stroke: #0f0e0c; stroke-width: 2.5; fill: none; }
+
+    .task-text { font-size: 0.93rem; color: #c8b898; line-height: 1.5; flex: 1; }
+    .task-text.done { text-decoration: line-through; color: #5a5040; }
+    .task-hint { font-size: 0.75rem; color: #6a5a40; font-style: italic; margin-top: 3px; }
+
+    .note-btn {
+      background: none; border: none; color: #5a5040;
+      cursor: pointer; font-size: 0.72rem; padding: 4px 0;
+      margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em;
+      display: block;
+    }
+    .note-input {
+      width: 100%; margin-top: 8px;
+      background: #1a1814; border: 1px solid #3a3020;
+      border-radius: 6px; padding: 10px 12px;
+      color: #c8b898; font-family: 'Source Serif 4', serif;
+      font-size: 0.88rem; resize: none; min-height: 70px;
+      outline: none; -webkit-appearance: none;
+    }
+    .note-input:focus { border-color: #c8a96e; }
+    .divider { height: 1px; background: #1e1b14; margin: 0 12px; }
+
+    /* ---- NAV ARROWS ---- */
+    .phase-nav-btns {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid #1e1b14;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      background: #1a1814; border: 1px solid #3a3020;
+      color: #c8a96e; font-size: 0.78rem;
+      padding: 10px 20px; border-radius: 6px;
+      cursor: pointer; letter-spacing: 0.06em;
+      text-transform: uppercase; font-family: 'Source Serif 4', serif;
+    }
+    .nav-btn:disabled { opacity: 0.2; cursor: default; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    const steps = [
+      {
+        id: "assessment", phase: "Phase 1", title: "Initial Assessment", icon: "📋",
+        tasks: [
+          { id: "t1", text: "Measure cab interior dimensions (H × W × D)", note: "Document in inches" },
+          { id: "t2", text: "Photograph existing condition of all surfaces" },
+          { id: "t3", text: "Identify existing cab material (wood, steel, laminate)" },
+          { id: "t4", text: "Check door type and operator compatibility" },
+          { id: "t5", text: "Note ADA compliance gaps (handrails, signage, floor indicators)" },
+          { id: "t6", text: "Assess lighting fixture type and ceiling condition" },
+        ],
+      },
+      {
+        id: "flooring", phase: "Phase 2", title: "Flooring", icon: "🪨",
+        tasks: [
+          { id: "t7", text: "Remove existing flooring and adhesive" },
+          { id: "t8", text: "Inspect and repair subfloor if damaged" },
+          { id: "t9", text: "Install new flooring material (tile, vinyl, stone, carpet)" },
+          { id: "t10", text: "Apply transition strips at cab threshold" },
+          { id: "t11", text: "Verify floor is level and seams are flush" },
+        ],
+      },
+      {
+        id: "walls", phase: "Phase 3", title: "Wall Panels", icon: "🧱",
+        tasks: [
+          { id: "t12", text: "Remove existing wall panels carefully (preserve wiring)" },
+          { id: "t13", text: "Inspect and treat for corrosion on cab structure" },
+          { id: "t14", text: "Install new wall panels (stainless, laminate, or decorative)" },
+          { id: "t15", text: "Secure all panels with appropriate fasteners" },
+          { id: "t16", text: "Install base/chair rail moldings if applicable" },
+          { id: "t17", text: "Ensure panel joints are tight and aligned" },
+        ],
+      },
+      {
+        id: "ceiling", phase: "Phase 4", title: "Ceiling & Lighting", icon: "💡",
+        tasks: [
+          { id: "t18", text: "Remove old ceiling panels and light fixtures" },
+          { id: "t19", text: "Upgrade wiring to support LED fixtures" },
+          { id: "t20", text: "Install new ceiling panels (flush, drop, or canopy style)" },
+          { id: "t21", text: "Mount LED lighting — ensure 50+ foot-candles at floor level" },
+          { id: "t22", text: "Install emergency lighting per code (ASME A17.1)" },
+          { id: "t23", text: "Add ventilation grille if required" },
+        ],
+      },
+      {
+        id: "cop", phase: "Phase 5", title: "COP Panel", icon: "🎛️",
+        tasks: [
+          { id: "t24", text: "Remove and catalog existing COP wiring" },
+          { id: "t25", text: "Install new COP faceplate and housing" },
+          { id: "t26", text: "Wire buttons for all floors + door open/close/alarm" },
+          { id: "t27", text: "Install Braille labels on all buttons (ADA required)" },
+          { id: "t28", text: "Test each button for proper floor registration" },
+          { id: "t29", text: "Mount emergency phone and test connection" },
+        ],
+      },
+      {
+        id: "handrails", phase: "Phase 6", title: "Handrails & ADA", icon: "♿",
+        tasks: [
+          { id: "t30", text: "Remove old handrails (if present)" },
+          { id: "t31", text: 'Mark and drill mounting holes at 34"–38" height' },
+          { id: "t32", text: "Install stainless or brass handrail on rear wall" },
+          { id: "t33", text: "Install side handrails if cab width allows" },
+          { id: "t34", text: 'Verify handrail clearance from wall (1.5" min)' },
+          { id: "t35", text: "Install floor position indicator / digital display" },
+        ],
+      },
+      {
+        id: "doors", phase: "Phase 7", title: "Doors & Sill", icon: "🚪",
+        tasks: [
+          { id: "t36", text: "Remove existing cab door panels" },
+          { id: "t37", text: "Install new matching door panels (align with walls)" },
+          { id: "t38", text: "Clean or replace cab sill and gibs" },
+          { id: "t39", text: "Check door reopening device (safety edge / light curtain)" },
+          { id: "t40", text: "Adjust door speed and dwell time" },
+        ],
+      },
+      {
+        id: "inspection", phase: "Phase 8", title: "Sign-Off", icon: "✅",
+        tasks: [
+          { id: "t41", text: "Conduct full visual punch-list walkthrough" },
+          { id: "t42", text: "Test all buttons, lighting, and phone" },
+          { id: "t43", text: "Verify ADA compliance (dimensions, signage, braille)" },
+          { id: "t44", text: "Clean cab thoroughly before inspection" },
+          { id: "t45", text: "Submit documentation to local AHJ for approval" },
+          { id: "t46", text: "Obtain certificate of operation / inspection sticker" },
+        ],
+      },
+    ];
+
+    function App() {
+      const [checked, setChecked] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('elev-checked') || '{}'); } catch { return {}; }
+      });
+      const [activeIdx, setActiveIdx] = useState(0);
+      const [notes, setNotes] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('elev-notes') || '{}'); } catch { return {}; }
+      });
+      const [showNoteFor, setShowNoteFor] = useState(null);
+      const navRef = useRef(null);
+
+      // Persist to localStorage
+      useEffect(() => {
+        try { localStorage.setItem('elev-checked', JSON.stringify(checked)); } catch {}
+      }, [checked]);
+      useEffect(() => {
+        try { localStorage.setItem('elev-notes', JSON.stringify(notes)); } catch {}
+      }, [notes]);
+
+      const totalTasks = steps.reduce((a, s) => a + s.tasks.length, 0);
+      const completedTasks = Object.values(checked).filter(Boolean).length;
+      const pct = Math.round((completedTasks / totalTasks) * 100);
+
+      const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
+      const phaseComplete = (s) => s.tasks.every(t => checked[t.id]);
+      const phaseProgress = (s) => s.tasks.filter(t => checked[t.id]).length;
+
+      const activeStep = steps[activeIdx];
+
+      const goTo = (idx) => {
+        setActiveIdx(idx);
+        setShowNoteFor(null);
+        // Scroll tab into view
+        setTimeout(() => {
+          const tabs = navRef.current?.querySelectorAll('.phase-tab');
+          tabs?.[idx]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }, 50);
+      };
+
+      return (
+        <div>
+          {/* FIXED HEADER */}
+          <div className="header">
+            <div className="title">Cab Interior Modernization</div>
+            <div className="subtitle">Step-by-step renovation checklist</div>
+            <div className="progress-bar-wrap">
+              <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="progress-label">{completedTasks} of {totalTasks} tasks — {pct}% complete</div>
+          </div>
+
+          <div className="app-body">
+            {/* PHASE NAV TABS */}
+            <div className="phase-nav" ref={navRef}>
+              {steps.map((s, i) => (
+                <button
+                  key={s.id}
+                  className={`phase-tab ${activeIdx === i ? 'active' : ''} ${phaseComplete(s) ? 'complete' : ''}`}
+                  onClick={() => goTo(i)}
+                >
+                  <span className="tab-icon">{s.icon}</span>
+                  <span className="tab-label">{s.title}</span>
+                  <span className="tab-dot" />
+                </button>
+              ))}
+            </div>
+
+            {/* TASK CONTENT */}
+            <div className="content">
+              <div className="phase-header">
+                <div className="phase-tag">{activeStep.phase} · {activeStep.icon} {activeStep.title}</div>
+                <div className="phase-title">{activeStep.title}</div>
+                <div className="phase-progress">
+                  {phaseProgress(activeStep)} of {activeStep.tasks.length} tasks completed
+                  {phaseComplete(activeStep) ? ' — Phase complete ✓' : ''}
+                </div>
+              </div>
+
+              <div className="task-list">
+                {activeStep.tasks.map((task, i) => (
+                  <div key={task.id}>
+                    <div
+                      className={`task-item ${checked[task.id] ? 'done' : ''}`}
+                      onClick={() => toggle(task.id)}
+                    >
+                      <div className={`task-check ${checked[task.id] ? 'checked' : ''}`}>
+                        {checked[task.id] && (
+                          <svg viewBox="0 0 14 14">
+                            <polyline points="2,7 6,11 12,3" />
+                          </svg>
+                        )}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div className={`task-text ${checked[task.id] ? 'done' : ''}`}>{task.text}</div>
+                        {task.note && <div className="task-hint">{task.note}</div>}
+                        <button
+                          className="note-btn"
+                          onClick={(e) => { e.stopPropagation(); setShowNoteFor(showNoteFor === task.id ? null : task.id); }}
+                        >
+                          {notes[task.id] ? '📝 Edit note' : '+ add note'}
+                        </button>
+                        {showNoteFor === task.id && (
+                          <textarea
+                            className="note-input"
+                            placeholder="Add a field note..."
+                            value={notes[task.id] || ''}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => setNotes(prev => ({ ...prev, [task.id]: e.target.value }))}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    {i < activeStep.tasks.length - 1 && <div className="divider" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PREV / NEXT NAV */}
+            <div className="phase-nav-btns">
+              <button className="nav-btn" onClick={() => goTo(activeIdx - 1)} disabled={activeIdx === 0}>
+                ← Prev
+              </button>
+              <span style={{ fontSize: '0.72rem', color: '#5a5040', alignSelf: 'center', letterSpacing: '0.08em' }}>
+                {activeIdx + 1} / {steps.length}
+              </span>
+              <button className="nav-btn" onClick={() => goTo(activeIdx + 1)} disabled={activeIdx === steps.length - 1}>
+                Next →
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
