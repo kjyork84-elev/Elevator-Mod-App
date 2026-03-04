@@ -74,8 +74,8 @@ body{background:#0f0e0c;color:#e8e0d0;font-family:'Source Serif 4',Georgia,serif
 .task-text{font-size:0.88rem;color:#c8b898;line-height:1.45}
 .task-acts{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center}
 .task-btn{background:none;border:none;color:#5a5040;cursor:pointer;font-size:0.65rem;padding:2px 0;text-transform:uppercase;letter-spacing:.05em}
-.flag-btn{background:none;border:none;cursor:pointer;font-size:0.78rem;padding:2px 4px;border-radius:4px;line-height:1}
-.flag-btn.active{background:#3a2008}
+.flag-btn{background:none;border:1px solid #3a3020;cursor:pointer;font-size:0.72rem;padding:3px 8px;border-radius:4px;line-height:1;color:#7a6a50;text-transform:uppercase;letter-spacing:.05em}
+.flag-btn.active{background:#3a2008;border-color:#7a4a10;color:#e8a060}
 .note-inp{width:100%;margin-top:6px;background:#1a1814;border:1px solid #3a3020;border-radius:5px;padding:7px 9px;color:#c8b898;font-family:'Source Serif 4',serif;font-size:0.82rem;resize:none;min-height:55px;outline:none;-webkit-appearance:none}
 .note-inp:focus{border-color:#c8a96e}
 .photo-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
@@ -228,13 +228,12 @@ function Task(props) {
     },
       h('div', {className:'task-check', onClick:props.onToggle, style:{cursor:'pointer'}}),
       h('div', {className:'task-body'},
-        h('div', {className:'task-text', onClick:props.onToggle, style:{cursor:'pointer'}}, task.name),
+        h('div', {className:'task-text', onClick:props.onToggle, style:{cursor:'pointer'}}, (ts.flagged ? '! ' : '') + task.name),
         h('div', {className:'task-acts'},
           h('button', {
             className: 'flag-btn' + (ts.flagged ? ' active' : ''),
-            title: ts.flagged ? 'Remove priority' : 'Mark priority',
             onClick: function(e){e.stopPropagation(); props.onFlag();}
-          }, ts.flagged ? '! Priority' : 'Flag'),
+          }, ts.flagged ? '! Flagged - tap to remove' : '! Flag as Priority'),
           h('button', {className:'task-btn', onClick:function(e){e.stopPropagation();setShowNote(function(v){return !v;})}},
             ts.note ? 'Note' : '+ Note'),
           h('button', {className:'task-btn', onClick:function(e){e.stopPropagation();camRef.current&&camRef.current.click();}}, 'Camera'),
